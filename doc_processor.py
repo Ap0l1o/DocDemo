@@ -36,6 +36,7 @@ class DocProcessor:
         """
         expense_details = {}
         total_amount = 0.0
+        table_total = 0.0
 
         print(f'\n找到 {len(self.doc.tables)} 个表格')
         for i, table in enumerate(self.doc.tables):
@@ -47,9 +48,27 @@ class DocProcessor:
             # 检查是否是费用明细表格
             if self._is_expense_table(table):
                 print('识别为费用明细表格，开始解析...')
-                # 从第二行开始遍历（跳过表头）
-                for row_idx, row in enumerate(table.rows[1:], 1):
+                # 获取除表头和最后一行（汇总行）外的所有行
+                data_rows = table.rows[1:-1]
+                # 解析最后一行（汇总行）
+                if len(table.rows) > 2:
+                    last_row = table.rows[-1]
+                    last_row_amount = last_row.cells[-1].text.strip()
+                    total_match = re.search(r'\d+(\.\d+)?', last_row_amount)
+                    if total_match:
+                        table_total = float(total_match.group())
+                        print(f'表格汇总金额：{table_total}万元')
+
+                # 从第二行开始遍历（跳过表头和汇总行）
+                processed_cells = set()  # 用于记录已处理的单元格
+                for row_idx, row in enumerate(data_rows, 1):
                     try:
+                        # 检查第一列单元格是否已处理（合并单元格的情况）
+                        cell_key = (row.cells[0]._tc, row.cells[-1]._tc)  # 使用单元格的内部标识作为键
+                        if cell_key in processed_cells:
+                            print(f'跳过第 {row_idx} 行：合并单元格已处理')
+                            continue
+
                         # 假设第一列是实施内容，最后一列是金额
                         content = row.cells[0].text.strip()
                         amount_text = row.cells[-1].text.strip()
@@ -62,12 +81,20 @@ class DocProcessor:
                             expense_details[content] = amount
                             total_amount += amount
                             print(f'成功解析金额：{amount}万元')
+                            processed_cells.add(cell_key)  # 标记该单元格已处理
                         else:
                             print(f'警告：无法从文本中提取数字：{amount_text}')
 
                     except (ValueError, AttributeError) as e:
                         print(f'处理第 {row_idx} 行时出错：{str(e)}')
                         continue
+
+                # 比较计算的总金额与表格汇总金额
+                if table_total > 0:
+                    if abs(total_amount - table_total) < 0.01:  # 考虑浮点数精度误差
+                        print(f'\n计算总金额（{total_amount}万元）与表格汇总金额（{table_total}万元）一致')
+                    else:
+                        print(f'\n警告：计算总金额（{total_amount}万元）与表格汇总金额（{table_total}万元）不一致！')
 
         return expense_details, total_amount
 
@@ -92,14 +119,21 @@ class DocProcessor:
         if '费用明细' in header_text:
             return True
 
-        # 检查表格周围的段落是否包含'费用明细'字样
-        for paragraph in self.doc.paragraphs:
-            if '费用明细' in paragraph.text:
-                # 如果段落中包含费用明细字样，检查其后是否紧跟着这个表格
-                if hasattr(paragraph._element.getnext(), 'tbl') and \
-                   paragraph._element.getnext().tbl == table._element:
-                    print(f'在表格前的段落中找到"费用明细"：{paragraph.text}')
-                    return True
+        # 遍历文档中的所有段落，找到当前表格在文档中的位置
+        current_element = table._element
+        previous_element = current_element.getprevious()
+        
+        # 向上查找最近的段落
+        while previous_element is not None:
+            if previous_element.tag.endswith('p'):  # 是段落元素
+                paragraph_text = previous_element.xpath('.//w:t')
+                if paragraph_text:
+                    text = ''.join([t.text for t in paragraph_text if t.text])
+                    if '费用明细' in text:
+                        print(f'在表格上方找到标题：{text}')
+                        return True
+                break  # 只检查最近的段落
+            previous_element = previous_element.getprevious()
 
         return False
 
