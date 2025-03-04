@@ -1,8 +1,23 @@
 import docx
 import re
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Tuple
 
 class DocProcessor:
+    def compare_amounts(self, text_amt: float, table_calculated: float) -> Dict[str, float]:
+        """金额对比验证
+
+        Args:
+            text_amt: 文本提取金额
+            table_calculated: 表格计算总金额
+
+        Returns:
+            Dict[str, float]: 差异分析结果（差异值 = |文本金额 - 表格计算金额|）
+        """
+        diff_value = abs(text_amt - table_calculated)
+        return {
+            'text_vs_table': diff_value,
+            'calculation_formula': f'差异值 = |{text_amt:.2f} - {table_calculated:.2f}|'
+        }
     def __init__(self, file_path: str):
         """初始化文档处理器
 
@@ -12,21 +27,31 @@ class DocProcessor:
         self.file_path = file_path
         self.doc = docx.Document(file_path)
 
-    def extract_amount_sentences(self) -> List[str]:
-        """提取包含'万元'的句子
+    def extract_amount_sentences(self) -> Tuple[List[str], List[float]]:
+        """提取包含万元的句子及金额
 
         Returns:
-            List[str]: 包含'万元'的句子列表
+            Tuple[List[str], List[float]]: (句子列表, 金额列表)
         """
         sentences = []
+        amounts = []
+        pattern = r'(\d+(?:\.\d+)?)万元'
+        
         for paragraph in self.doc.paragraphs:
             text = paragraph.text.strip()
             if '万元' in text:
-                # 使用正则表达式匹配包含数字和'万元'的句子
-                matches = re.finditer(r'[^。！？.，"]*?\d+万元[^。，！？.]*[，。！？.]?', text)
-                for match in matches:
-                    sentences.append(match.group().strip())
-        return sentences
+                # 分步处理：先匹配完整句子结构
+                sentence_matches = re.findall(r'[^，。！？；]+万元[^，。！？；]*', text)
+                for raw_sentence in sentence_matches:
+                    print(f'提取到句子：{raw_sentence}')
+                    sentences.append(raw_sentence.strip())
+                
+                # 提取具体金额数值
+                amount_matches = re.findall(pattern, text)
+                for amt in amount_matches:
+                    amounts.append(float(amt))
+        
+        return sentences, amounts
 
     def parse_expense_table(self) -> Tuple[Dict[str, float], float]:
         """解析费用明细表格
@@ -56,7 +81,7 @@ class DocProcessor:
                     last_row_amount = last_row.cells[-1].text.strip()
                     total_match = re.search(r'\d+(\.\d+)?', last_row_amount)
                     if total_match:
-                        table_total = float(total_match.group())
+                        table_total = float(total_match.group()) / 10000  # 转换为万元
                         print(f'表格汇总金额：{table_total}万元')
 
                 # 从第二行开始遍历（跳过表头和汇总行）
@@ -77,7 +102,7 @@ class DocProcessor:
                         # 提取金额中的数字
                         amount_match = re.search(r'\d+(\.\d+)?', amount_text)
                         if amount_match:
-                            amount = float(amount_match.group())
+                            amount = round(float(amount_match.group()) / 10000, 4)  # 精确到小数点后四位
                             expense_details[content] = amount
                             total_amount += amount
                             print(f'成功解析金额：{amount}万元')
@@ -96,7 +121,7 @@ class DocProcessor:
                     else:
                         print(f'\n警告：计算总金额（{total_amount}万元）与表格汇总金额（{table_total}万元）不一致！')
 
-        return expense_details, total_amount
+        return expense_details, total_amount, table_total
 
     def _is_expense_table(self, table) -> bool:
         """判断是否是费用明细表格
@@ -148,20 +173,61 @@ def process_doc(file_path: str):
         processor = DocProcessor(file_path)
         
         # 提取包含'万元'的句子
-        amount_sentences = processor.extract_amount_sentences()
+        amount_sentences, extracted_amounts = processor.extract_amount_sentences()
         print('\n包含「万元」的句子：')
         for sentence in amount_sentences:
             print(f'- {sentence}')
 
         # 解析费用明细表格
-        expense_details, total_amount = processor.parse_expense_table()
+        # 获取所有数据
+        amount_sentences, extracted_amounts = processor.extract_amount_sentences()
+        expense_details, calculated_total, _ = processor.parse_expense_table()
+        
+        # 第一部分：提取的万元句子
+        print('\n====== 文本提取结果 ======')
+        print(f'\n发现 {len(amount_sentences)} 个包含万元的句子：')
+        for i, sentence in enumerate(amount_sentences, 1):
+            print(f'{i}. {sentence}')
+        
+        # 第二部分：表格解析结果
+        print('\n====== 表格解析结果 ======')
         if expense_details:
-            print('\n费用明细：')
+            print('\n费用明细列表：')
             for content, amount in expense_details.items():
                 print(f'- {content}: {amount}万元')
-            print(f'\n总金额：{total_amount}万元')
+            
+            print(f'\n表格计算总金额：{calculated_total}万元')
+            comparison = processor.compare_amounts(amt, calculated_total)
+            print(f'对比计算方式：{comparison["calculation_formula"]}')
+            print(f'金额差异：{comparison["text_vs_table"]:.2f}万元')
         else:
-            print('\n未找到费用明细表格或表格为空')
+            print('\n未找到费用明细表格')
+        
+        # 第三部分：金额对比验证
+        print('\n====== 金额一致性验证 ======')
+        if expense_details:
+            print(f'表格计算总金额：{calculated_total}万元')
+            comparison = processor.compare_amounts(amt, calculated_total)
+            print(f'对比计算方式：{comparison["calculation_formula"]}')
+            print(f'金额差异：{comparison["text_vs_table"]:.2f}万元')
+            
+            print('\n逐个对比提取金额：')
+            for idx, amt in enumerate(extracted_amounts, 1):
+                print(f'\n第 {idx} 个提取金额：{amt}万元')
+                comparison = processor.compare_amounts(amt, calculated_total)
+                print(f'对比计算方式：{comparison["calculation_formula"]}')
+                print(f'金额差异：{comparison["text_vs_table"]:.2f}万元')
+            
+            # 删除重复的对比代码块
+            # 遍历所有提取的金额进行对比
+            for idx, extracted_amt in enumerate(extracted_amounts, 1):
+                print(f'\n第 {idx} 个提取金额：{extracted_amt}万元')
+                comparison = processor.compare_amounts(extracted_amt, calculated_total)
+                print(f'对比计算方式：{comparison["calculation_formula"]}')
+                print(f'金额差异：{comparison["text_vs_table"]:.2f}万元')
+                
+                if comparison["text_vs_table"] >= 0.01:
+                    print(f'发现金额差异：{comparison["text_vs_table"]:.2f}万元')
 
     except Exception as e:
         print(f'处理文档时出错：{str(e)}')
