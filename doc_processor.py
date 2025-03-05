@@ -96,15 +96,15 @@ def process_doc(file_path: str):
         # 1. 提取包含'万元'的句子及其金额
         print('一、文档中包含的金额信息：')
         sentences_with_amount = processor.extract_amount_sentences()
-        for sentence, amount in sentences_with_amount:
-            print(f'- {sentence}')
+        for i, (sentence, amount) in enumerate(sentences_with_amount, 1):
+            print(f'{i}. {sentence}')
 
         # 2. 解析费用明细表格
         print('\n二、费用明细表格解析结果：')
         expense_details, total_amount, table_total = processor.parse_expense_table()
         if expense_details:
-            for content, amount in expense_details.items():
-                print(f'- {content}: {amount:,.2f}元')
+            for i, (content, amount) in enumerate(expense_details.items(), 1):
+                print(f'{i}. {content}: {amount:,.2f}元')
             print(f'\n计算总金额：{total_amount:,.2f}元')
             if table_total > 0:
                 print(f'表格汇总金额：{table_total:,.2f}元')
@@ -118,12 +118,12 @@ def process_doc(file_path: str):
         print('\n三、金额对比分析：')
         if sentences_with_amount and expense_details:
             print('文档中提到的金额与费用明细表对比：')
-            for sentence, amount in sentences_with_amount:
+            for i, (sentence, amount) in enumerate(sentences_with_amount, 1):
                 diff = abs(amount - total_amount)
                 if diff < 0.01:
-                    print(f'- {sentence}中的金额（{amount:,.2f}元）与费用明细表总金额一致')
+                    print(f'{i}. {sentence}中的金额（{amount:,.2f}元）与费用明细表总金额一致')
                 else:
-                    print(f'- {sentence}中的金额（{amount:,.2f}元）与费用明细表总金额（{total_amount:,.2f}元）相差{diff:,.2f}元')
+                    print(f'{i}. {sentence}中的金额（{amount:,.2f}元）与费用明细表总金额（{total_amount:,.2f}元）相差{diff:,.2f}元')
 
     except Exception as e:
         print(f'处理文档时出错：{str(e)}')
