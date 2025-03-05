@@ -29,6 +29,9 @@ class DocProcessorGUI:
         self.process_button = ttk.Button(self.file_frame, text='处理文档', command=self.process_document)
         self.process_button.grid(row=0, column=2, padx=(5, 0))
 
+        self.export_button = ttk.Button(self.file_frame, text='导出结果', command=self.export_result, state='disabled')
+        self.export_button.grid(row=0, column=3, padx=(5, 0))
+
         # 结果显示区域
         self.result_text = scrolledtext.ScrolledText(self.main_frame, wrap=tk.WORD, width=80, height=30)
         self.result_text.grid(row=1, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
@@ -63,15 +66,53 @@ class DocProcessorGUI:
             # 获取输出结果
             result = output.getvalue()
             self.show_result(result)
+            # 启用导出按钮
+            self.export_button['state'] = 'normal'
         except Exception as e:
             self.show_result(f'处理文档时出错：{str(e)}')
+            # 禁用导出按钮
+            self.export_button['state'] = 'disabled'
         finally:
             # 恢复标准输出
             sys.stdout = sys.__stdout__
             output.close()
+
+    def export_result(self):
+        if not self.result_text.get('1.0', tk.END).strip():
+            self.show_result('没有可导出的处理结果')
+            return
+
+        # 获取原文件名
+        original_file = self.file_path.get()
+        if not original_file:
+            self.show_result('请先选择并处理Word文档')
+            return
+
+        # 构建默认导出文件名
+        base_name = original_file.rsplit('.', 1)[0]
+        export_name = f"{base_name}_费用分析结果.txt"
+
+        # 打开文件保存对话框
+        file_path = filedialog.asksaveasfilename(
+            title='保存分析结果',
+            initialfile=export_name.split('/')[-1].split('\\')[-1],
+            defaultextension='.txt',
+            filetypes=[('文本文件', '*.txt')]
+        )
+
+        if file_path:
+            try:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(self.result_text.get('1.0', tk.END))
+                self.show_result('分析结果已成功导出')
+            except Exception as e:
+                self.show_result(f'导出文件时出错：{str(e)}')
+
     def show_result(self, text):
         self.result_text.delete('1.0', tk.END)
         self.result_text.tag_configure('red', foreground='red')
+        # 禁用导出按钮，因为内容被清空了
+        self.export_button['state'] = 'disabled'
         
         # 使用正则表达式匹配金额数字
         lines = text.split('\n')
