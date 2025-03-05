@@ -8,7 +8,7 @@ import re
 class DocProcessorGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title('文档处理工具')
+        self.root.title('项目开发类金额校验工具')
         self.root.geometry('1000x500')
 
         # 创建主框架
@@ -26,7 +26,7 @@ class DocProcessorGUI:
         self.browse_button = ttk.Button(self.file_frame, text='选择文件', command=self.browse_file)
         self.browse_button.grid(row=0, column=1)
 
-        self.process_button = ttk.Button(self.file_frame, text='处理文档', command=self.process_document)
+        self.process_button = ttk.Button(self.file_frame, text='校验文档', command=self.process_document)
         self.process_button.grid(row=0, column=2, padx=(5, 0))
 
         self.export_button = ttk.Button(self.file_frame, text='导出结果', command=self.export_result, state='disabled')
@@ -111,6 +111,7 @@ class DocProcessorGUI:
     def show_result(self, text):
         self.result_text.delete('1.0', tk.END)
         self.result_text.tag_configure('red', foreground='red')
+        self.result_text.tag_configure('bold', font=('TkDefaultFont', 10, 'bold'))
         # 禁用导出按钮，因为内容被清空了
         self.export_button['state'] = 'disabled'
         
@@ -119,15 +120,18 @@ class DocProcessorGUI:
         current_section = 0  # 0: 未知, 1: 第一部分, 2: 第二部分, 3: 第三部分
         
         for line in lines:
-            if '一、文档中包含的金额信息' in line:
-                current_section = 1
-            elif '二、费用明细表格解析结果' in line:
-                current_section = 2
-            elif '三、金额对比分析' in line:
-                current_section = 3
-
             start_pos = self.result_text.index('end-1c')
             self.result_text.insert('end', line + '\n')
+            
+            # 处理标题加粗
+            if '一、文档中包含的金额信息' in line or '二、费用明细表格解析结果' in line or '三、金额对比分析' in line:
+                self.result_text.tag_add('bold', start_pos, f"{start_pos.split('.')[0]}.{len(line)}")
+                if '一、文档中包含的金额信息' in line:
+                    current_section = 1
+                elif '二、费用明细表格解析结果' in line:
+                    current_section = 2
+                elif '三、金额对比分析' in line:
+                    current_section = 3
             
             if current_section == 1 and '万元' in line:
                 # 第一部分：只标红万元前的数字
@@ -137,9 +141,17 @@ class DocProcessorGUI:
                     end = f"{start_pos.split('.')[0]}.{match.end()}"
                     self.result_text.tag_add('red', start, end)
             elif current_section == 2:
-                if '计算总金额' in line or '表格汇总金额' in line:
+                # 第二部分：标红所有金额数字
+                if ':' in line:
+                    # 费用明细项的金额
+                    amounts = re.finditer(r'\d+(?:,\d{3})*\.\d{2}(?=元)', line)
+                    for match in amounts:
+                        start = f"{start_pos.split('.')[0]}.{match.start()}"
+                        end = f"{start_pos.split('.')[0]}.{match.end()}"
+                        self.result_text.tag_add('red', start, end)
+                elif '费用明细汇总金额' in line or '表格汇总金额' in line:
                     # 标红计算总金额和表格汇总金额
-                    amounts = re.finditer(r'(?<==\s)\d+(?:,\d{3})*\.\d{2}(?=元)', line)
+                    amounts = re.finditer(r'\d+(?:,\d{3})*\.\d{2}(?=元)', line)
                     for match in amounts:
                         start = f"{start_pos.split('.')[0]}.{match.start()}"
                         end = f"{start_pos.split('.')[0]}.{match.end()}"
