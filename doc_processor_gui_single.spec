@@ -12,7 +12,7 @@ a = Analysis(
              'unittest', 'email', 'html', 'http', 'xml', 'pydoc', 'doctest', 'argparse', 
              'pickle', 'calendar', 'ftplib', 'httplib2', 'pytz', 'asyncio', 'concurrent'],
     noarchive=False,
-    optimize=0,
+    optimize=2,
 )
 pyz = PYZ(a.pure)
 
