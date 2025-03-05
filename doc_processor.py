@@ -105,14 +105,19 @@ def process_doc(file_path: str):
         if expense_details:
             for i, (content, amount) in enumerate(expense_details.items(), 1):
                 print(f'{i}. {content}: {amount:,.2f}元')
-            print(f'\n计算总金额：{total_amount:,.2f}元')
+            
+            # 显示计算总金额的数学表达式
+            amounts = [amount for _, amount in expense_details.items()]
+            expression = ' + '.join(f'{amount:,.2f}' for amount in amounts)
+            print(f'\n计算总金额：{expression} = {total_amount:,.2f}元')
+            
             if table_total > 0:
                 print(f'表格汇总金额：{table_total:,.2f}元')
                 diff = abs(total_amount - table_total)
                 if diff < 0.01:
                     print('计算总金额与表格汇总金额一致')
                 else:
-                    print(f'计算总金额与表格汇总金额相差：{diff:,.2f}元')
+                    print(f'计算总金额与表格汇总金额相差：|{total_amount:,.2f} - {table_total:,.2f}| = {diff:,.2f}元')
 
         # 3. 金额对比分析
         print('\n三、金额对比分析：')
@@ -123,7 +128,7 @@ def process_doc(file_path: str):
                 if diff < 0.01:
                     print(f'{i}. {sentence}中的金额（{amount:,.2f}元）与费用明细表总金额一致')
                 else:
-                    print(f'{i}. {sentence}中的金额（{amount:,.2f}元）与费用明细表总金额（{total_amount:,.2f}元）相差{diff:,.2f}元')
+                    print(f'{i}. {sentence}中的金额（{amount:,.2f}元）与费用明细表总金额（{total_amount:,.2f}元）相差：|{amount:,.2f} - {total_amount:,.2f}| = {diff:,.2f}元')
 
     except Exception as e:
         print(f'处理文档时出错：{str(e)}')
