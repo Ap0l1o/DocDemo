@@ -3,12 +3,13 @@ from tkinter import ttk, filedialog, scrolledtext
 from doc_processor import process_doc
 import sys
 import io
+import re
 
 class DocProcessorGUI:
     def __init__(self, root):
         self.root = root
         self.root.title('文档处理工具')
-        self.root.geometry('800x600')
+        self.root.geometry('1000x500')
 
         # 创建主框架
         self.main_frame = ttk.Frame(self.root, padding="10")
@@ -68,11 +69,54 @@ class DocProcessorGUI:
             # 恢复标准输出
             sys.stdout = sys.__stdout__
             output.close()
-
     def show_result(self, text):
         self.result_text.delete('1.0', tk.END)
-        self.result_text.insert('1.0', text)
+        self.result_text.tag_configure('red', foreground='red')
+        
+        # 使用正则表达式匹配金额数字
+        lines = text.split('\n')
+        current_section = 0  # 0: 未知, 1: 第一部分, 2: 第二部分, 3: 第三部分
+        
+        for line in lines:
+            if '一、文档中包含的金额信息' in line:
+                current_section = 1
+            elif '二、费用明细表格解析结果' in line:
+                current_section = 2
+            elif '三、金额对比分析' in line:
+                current_section = 3
 
+            start_pos = self.result_text.index('end-1c')
+            self.result_text.insert('end', line + '\n')
+            
+            if current_section == 1 and '万元' in line:
+                # 第一部分：只标红万元前的数字
+                amounts = re.finditer(r'(\d+)(?=万元)', line)
+                for match in amounts:
+                    start = f"{start_pos.split('.')[0]}.{match.start()}"
+                    end = f"{start_pos.split('.')[0]}.{match.end()}"
+                    self.result_text.tag_add('red', start, end)
+            elif current_section == 2:
+                if '计算总金额' in line or '表格汇总金额' in line:
+                    # 标红计算总金额和表格汇总金额
+                    amounts = re.finditer(r'(?<==\s)\d+(?:,\d{3})*\.\d{2}(?=元)', line)
+                    for match in amounts:
+                        start = f"{start_pos.split('.')[0]}.{match.start()}"
+                        end = f"{start_pos.split('.')[0]}.{match.end()}"
+                        self.result_text.tag_add('red', start, end)
+                elif '相差' in line:
+                    # 标红差异值
+                    amounts = re.finditer(r'(?<==\s)\d+(?:,\d{3})*\.\d{2}(?=元)', line)
+                    for match in amounts:
+                        start = f"{start_pos.split('.')[0]}.{match.start()}"
+                        end = f"{start_pos.split('.')[0]}.{match.end()}"
+                        self.result_text.tag_add('red', start, end)
+            elif current_section == 3 and '相差' in line:
+                # 第三部分：只标红差异值
+                amounts = re.finditer(r'(?<==\s)\d+(?:,\d{3})*\.\d{2}(?=元)', line)
+                for match in amounts:
+                    start = f"{start_pos.split('.')[0]}.{match.start()}"
+                    end = f"{start_pos.split('.')[0]}.{match.end()}"
+                    self.result_text.tag_add('red', start, end)
 def main():
     root = tk.Tk()
     app = DocProcessorGUI(root)
