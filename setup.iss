@@ -1,14 +1,12 @@
 [Setup]
-AppName=é¡¹ç›®å¼€å‘ç±»é‡‘é¢æ ¡éªŒå·¥å…·
+AppName=ÏîÄ¿¿ª·¢Àà½ğ¶îĞ£Ñé¹¤¾ß
 AppVersion=1.0
-DefaultDirName={autopf}\é¡¹ç›®å¼€å‘ç±»é‡‘é¢æ ¡éªŒå·¥å…·
-DefaultGroupName=é¡¹ç›®å¼€å‘ç±»é‡‘é¢æ ¡éªŒå·¥å…·
+DefaultDirName={autopf}\ÏîÄ¿¿ª·¢Àà½ğ¶îĞ£Ñé¹¤¾ß
+DefaultGroupName=ÏîÄ¿¿ª·¢Àà½ğ¶îĞ£Ñé¹¤¾ß
 OutputDir=.
-OutputBaseFilename=é¡¹ç›®å¼€å‘ç±»é‡‘é¢æ ¡éªŒå·¥å…·_å®‰è£…åŒ…
-Compression=lzma
-SolidCompression=yes
+OutputBaseFilename=ÏîÄ¿¿ª·¢Àà½ğ¶îĞ£Ñé¹¤¾ß_°²×°°ü
 PrivilegesRequired=lowest
-SetupIconFile=img\logo.jpg
+SetupIconFile=img\logo.ico
 
 [Languages]
 Name: "chinesesimp"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
@@ -17,15 +15,13 @@ Name: "chinesesimp"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
-Source: "dist\doc_processor_gui.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "img\logo.jpg"; DestDir: "{app}"; Flags: ignoreversion
+Source: "dist\doc_processor_gui\*.*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "img\logo.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "C:\Windows\System32\msvcp140.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Windows\System32\vcruntime140.dll"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\é¡¹ç›®å¼€å‘ç±»é‡‘é¢æ ¡éªŒå·¥å…·"; Filename: "{app}\doc_processor_gui.exe"; IconFilename: "{app}\logo.jpg"
-Name: "{autodesktop}\é¡¹ç›®å¼€å‘ç±»é‡‘é¢æ ¡éªŒå·¥å…·"; Filename: "{app}\doc_processor_gui.exe"; IconFilename: "{app}\logo.jpg"; Tasks: desktopicon
+Name: "{group}\ÏîÄ¿¿ª·¢Àà½ğ¶îĞ£Ñé¹¤¾ß"; Filename: "{app}\doc_processor_gui.exe"; IconFilename: "{app}\logo.jpg"
+Name: "{autodesktop}\ÏîÄ¿¿ª·¢Àà½ğ¶îĞ£Ñé¹¤¾ß"; Filename: "{app}\doc_processor_gui.exe"; IconFilename: "{app}\logo.jpg"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\doc_processor_gui.exe"; Description: "{cm:LaunchProgram,é¡¹ç›®å¼€å‘ç±»é‡‘é¢æ ¡éªŒå·¥å…·}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\doc_processor_gui.exe"; Description: "{cm:LaunchProgram,ÏîÄ¿¿ª·¢Àà½ğ¶îĞ£Ñé¹¤¾ß}"; Flags: nowait postinstall skipifsilent

@@ -1,0 +1,5 @@
+## 打包成可执行文件
+pyinstaller doc_processor_gui_single.spec --clean
+
+## 多模式打包
+pyinstaller doc_processor_gui.spec
