@@ -50,6 +50,7 @@ class DocProcessorGUI:
         )
         if file_path:
             self.file_path.set(file_path)
+            self.result_text.delete('1.0', tk.END)
 
     def process_document(self):
         file_path = self.file_path.get()
