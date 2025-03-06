@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='doc_processor_gui',
+    name='项目开发类金额校验工具',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
