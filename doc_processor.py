@@ -115,9 +115,9 @@ def process_doc(file_path: str):
                 print(f'表格汇总金额：{table_total:,.2f}元')
                 diff = abs(total_amount - table_total)
                 if diff < 0.01:
-                    print('费用明细汇总金额与表格汇总金额一致')
+                    print('费用明细汇总金额与表格汇总金额一致。')
                 else:
-                    print(f'费用明细汇总金额与表格汇总金额相差：|{total_amount:,.2f} - {table_total:,.2f}| = {diff:,.2f}元')
+                    print(f'费用明细汇总金额与表格汇总金额相差：|{total_amount:,.2f} - {table_total:,.2f}| = {diff:,.2f}元！')
 
         # 3. 金额对比分析
         print('\n三、金额对比分析：')
@@ -126,9 +126,9 @@ def process_doc(file_path: str):
             for i, (sentence, amount) in enumerate(sentences_with_amount, 1):
                 diff = abs(amount - total_amount)
                 if diff < 0.01:
-                    print(f'{i}. {sentence}（{amount:,.2f}元）与费用明细汇总金额一致')
+                    print(f'{i}. {sentence}（{amount:,.2f}元）与费用明细汇总金额一致。')
                 else:
-                    print(f'{i}. {sentence}（{amount:,.2f}元）与费用明细汇总金额（{total_amount:,.2f}元）相差：|{amount:,.2f} - {total_amount:,.2f}| = {diff:,.2f}元')
+                    print(f'{i}. {sentence}（{amount:,.2f}元）与费用明细汇总金额（{total_amount:,.2f}元）相差：|{amount:,.2f} - {total_amount:,.2f}| = {diff:,.2f}元！')
 
     except Exception as e:
         print(f'处理文档时出错：{str(e)}')
